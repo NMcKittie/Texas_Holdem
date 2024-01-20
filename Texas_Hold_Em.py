@@ -38,7 +38,7 @@ def deal_cards(deck):
 def reveal_hand(hand):
     hand_txt = ""
     for card in hand:
-        hand_txt = hand_txt + card + " "
+        hand_txt = hand_txt + str(card[0]) + card[1]  + " "
     return hand_txt
 
 def bet_or_fold():
@@ -84,22 +84,22 @@ def main():
 
     for number in numbers:
         for suit in suits:
-            deck.append(number + suit)
+            deck.append((number, suit))
 
     titlecard()
 
     while True:
-        house = []
-        player = []
+        house_deck = []
+        player_deck = []
         community_cards = []
 
         shuffled_deck = shuffle_deck(deck)
         
         
-        house, shuffled_deck = deal_cards(shuffled_deck)
-        player, shuffled_deck = deal_cards(shuffled_deck)
+        house_deck, shuffled_deck = deal_cards(shuffled_deck)
+        player_deck, shuffled_deck = deal_cards(shuffled_deck)
 
-        show_hands(community_cards, house, player)
+        show_hands(community_cards, house_deck, player_deck)
 
         print(bet_or_fold())
 
@@ -107,14 +107,14 @@ def main():
         community_cards = shuffled_deck[:3]
         del shuffled_deck[:3]
 
-        show_hands(community_cards, house, player)
+        show_hands(community_cards, house_deck, player_deck)
 
         print(bet_or_fold())
 
 
         community_cards = community_cards + shuffled_deck[:1]
         del shuffled_deck[:1]
-        show_hands(community_cards, house, player)
+        show_hands(community_cards, house_deck, player_deck)
 
         print(bet_or_fold())
 
@@ -122,7 +122,7 @@ def main():
         community_cards = community_cards + shuffled_deck[:1]
         del shuffled_deck[:1]
 
-        show_hands(community_cards, house, player)
+        show_hands(community_cards, house_deck, player_deck)
 
         print(bet_or_fold())
         
