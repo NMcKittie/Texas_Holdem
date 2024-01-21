@@ -1,50 +1,80 @@
 
-from Straights import get_straights
+def get_pairs(dict):
+    return [k for k,v in dict.items() if float(v) == 2]
+
+def get_triple(dict):
+    return [k for k,v in dict.items() if float(v) == 3]
+
+def get_quad(dict):
+    return [k for k,v in dict.items() if float(v) == 4]
+
+def get_suit(dict):
+    return [k for k,v in dict.items() if float(v) >= 5]
 
 
-def symbol_to_number(hand):
-
+def find_pair(hand, num):
+    pair = []
     for i, card in enumerate(hand):
-        #print(type(card[0]))
-        temp_list = list(card)
-        if temp_list[0] == "A":
-            temp_list[0] = 14
-        elif temp_list[0] == "K":
-            temp_list[0] = 13
-        elif temp_list[0] == "Q":
-            temp_list[0] = 12
-        elif temp_list[0] == "J":
-            temp_list[0] = 11
-        else:
-            temp_list[0] = int(temp_list[0])
-        hand[i] = tuple(temp_list)
+        if card[0] == num:
+            pair = [hand.pop(i),hand.pop(i)]
+            break
+    return pair
 
-    return sorted(hand)
+def find_triple(hand, num):
+    triple = []
+    for i, card in enumerate(hand):
+        if card[0] == num:
+            triple = [hand.pop(i),hand.pop(i),hand.pop(i)]
+            break
+    return triple
 
-# Creates a tuple with 2 dictionaries inside, one counts the number of times a card value occurs. The other dict counts the number of times a suit occurs
-def count_cards(hand):
-    number_dict = {}
-    suit_dict = {}
-    for card in hand:
-        num = symbol_to_number(card[0])
-        if num in number_dict:
-            number_dict[num]= number_dict[num] + 1
-        else:
-            number_dict[num] = 1
+def get_flush(hand, dict):
+    suit = get_suit(dict)[0]
+    flush = []
+    for card in reversed(hand):
+        if suit in card:
+           flush.append(card) 
+        if len(flush) == 5:
+            return (sorted(flush), "Flush")
+    return None
 
-    for card in hand:
-        suit = card[1]
-        if suit in suit_dict:
-            suit_dict[suit]= suit_dict[suit] + 1
-        else:
-            suit_dict[suit] = 1
-    
-    return(number_dict, suit_dict)
+def four_kind(hand, dict):
+    num = get_quad(dict)
+    four_of_a_kind = [(num, "H"), (num, "S"), (num, "D"), (num, "C"), hand[-1]]
+    return (four_of_a_kind, "Four_of_a_Kind")
 
-#def s(hand_ordered):
+def three_kind(hand, dict):
+    num = max(get_triple(dict))
+    three_of_a_kind = find_triple(hand,num) + [hand[-2], hand[-1]]
+    return (three_of_a_kind, "Three_of_a_Kind")
 
-lst = [("10", "C"), ("5", "H"), ("11", "C"), ("4", "H"), ("3", "H"), ("2", "S"), ("14", "H")]
-lst = symbol_to_number(lst)
 
-lst = get_straights(lst)
-print(lst)
+def one_pair(hand, dict):
+    num = max(get_pairs(dict))
+    pair = find_pair(hand,num) + [hand[-3], hand[-2], hand[-1]]
+    return (pair, "Pair")
+
+def two_pair(hand, dict):
+    pairs = get_pairs(dict)
+    first_pair = pairs.pop(pairs.index(max(pairs)))
+    second_pair = pairs.pop(pairs.index(max(pairs)))
+    pairs = find_pair(hand,first_pair) + find_pair(hand,second_pair) +  [hand[-1]]
+    return(pairs, "Two_Pairs")
+
+
+def fullhouse(hand, dict):
+    pair = max(get_pairs(dict))
+    triple = max(get_triple(dict))
+    fullhouse = find_triple(hand,triple) + find_pair(hand,pair)
+    return (fullhouse, "Full_House")
+
+
+def get_high_card(hand):
+    high_cards = []
+    for card in reversed(hand):
+        high_cards.append(card)
+        if len(high_cards) == 5:
+            break
+    return (high_cards, "High_Card")
+
+
