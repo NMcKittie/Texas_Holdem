@@ -1,113 +1,82 @@
-
-# Duplicates Ace to the lowest number so it can wrap around
-def aces_to_ones(hand):
-    for card in reversed(hand):
-        temp_list = list(card)
-        if temp_list[0] == 14:
-            temp_list[0] = 1
-            hand.append(tuple(temp_list))
-        else:
-            break
-    return sorted(hand)
-
-# Solution to an odd bug
-def ones_to_aces(hand):
-    for card in hand:
-        if card[0] == 1:
-            hand.remove(card)
-    return hand
-
-# handles pairs or 3 of a kinds for the straights function
-def duplicate_handler(hand, index):
-    print("hello")
-    prev_suit = (hand[index-2])[1]
-    if hand[index][0] < len(hand)-2:
-        if (hand[index])[0] == (hand[index+2])[0]:
-            print("he")
-            temp_lst = hand[(index):(index+3)]
-            for card in temp_lst:
-                if card[1] == prev_suit:
-                    return card, len(temp_lst)
-            return temp_lst[0], len(temp_lst)
-
-        #print("hello")
-    temp_lst = hand[(index):(index+2)]
-    print("sdds", temp_lst)
-    for card in temp_lst:
-        if card[1] == prev_suit:
-            return card, len(temp_lst)        
-    return temp_lst[0], len(temp_lst)
+from Winning_Clauses import get_suit, count_suits
+from Create_Cards import get_heart
+from Process_Win import get_straight, get_royal_flush, get_straight_flush
 
 
-
-
-# returns a straight, straight flush or a royal flush
-def get_straights(hand, index = 0):
-    hand = aces_to_ones(hand)
-    nothing_seq = [(0,""),(0,""),(0,""),(0,""),(0,"")]
-    flush_seq = []
-    high_seq = nothing_seq
-    print(hand)
-
-    while index < len(hand) -5:
-        flush = True
-        prev_suit = (hand[index])[1]
-        temp_list = []
-        first_val = (hand[index])[0]
-        count = 0 
-        inner_index = index
-
-        while inner_index < len(hand):
-            saved_index = inner_index
-            iterate = 1
-            num = (hand[inner_index])[0]
-            cur_suit = (hand[inner_index])[1]
-
-            if inner_index+1 < len(hand):
-                if num == (hand[inner_index+1])[0]:
-                    card, iterate = duplicate_handler(hand, inner_index)
-                    num = card[0]
-                    cur_suit = card[1]
-                    inner_index = hand.index((num, cur_suit))
-                    #print("after dup", inner_index)
-                   
-            if first_val + count == num:
-
-                print("prev_suit ", num, prev_suit, cur_suit)
-                if prev_suit != cur_suit:
-                    flush = False
-
-                #print(hand[inner_index])
-                temp_list.append(hand[inner_index])
-                inner_index = saved_index
-                prev_suit = cur_suit
-                count += 1
-                if len(temp_list) == 5: 
-                    break
-
-                inner_index += iterate
-
+def get_sequence(dict):
+    my_keys = list(dict.keys())
+    my_seq = []
+    for i, key in enumerate(my_keys):
+        temp_seq = [key]
+        for num in range(i+1, len(my_keys)):
+            cur_key = my_keys[num]
+            if cur_key == temp_seq[-1]+1:
+                temp_seq = temp_seq + [cur_key]
             else:
-                flush = False
-                temp_list = nothing_seq
                 break
 
-        index += 1
-
-        if len(temp_list) < 5:
-            temp_list = nothing_seq        
-        elif flush:
-            flush_seq = temp_list
-        elif (high_seq[1])[0] < (temp_list[1])[0]:
-            high_seq = temp_list
+            if len(temp_seq) == 5:
+                my_seq.append(temp_seq)
+                break
+    return my_seq
 
 
-    if high_seq == nothing_seq:
-        return None
-    elif not flush_seq:
-        return (high_seq, "Straight")
+def possible_straights(hand, face_values, suits):
+    sequences = get_sequence(face_values)
+    flush_suit = get_suit(suits)
+    possible_hands = []
+    for sequence in sequences:
+        possible_hand = []
+        for num in sequence:
+            temp_lst = []
+            for card in hand:
+                if int(card[0]) == num:
+                    temp_lst.append(card)
+
+            if len(temp_lst) > 1:
+                temp_tuple = temp_lst[0]
+                for duplicate in temp_lst:
+                    if duplicate[1] == flush_suit[0]:
+                        temp_tuple = duplicate
+                temp_lst = [temp_tuple]
+            if temp_lst:
+                possible_hand.append(temp_lst[0])
+        possible_hands.append(possible_hand)
+    return possible_hands
+
+
+def cal_royal_flush(possible_hands):
+
+    possible_hand = possible_hands[-1]
+    suit_dict = count_suits(possible_hand)
+    suit = get_suit(suit_dict)
+    if suit:
+        if suit[0] == get_heart() and int(possible_hand[0][0]) == 10:
+            return (possible_hand, get_royal_flush())
+    return None
+
+
+def cal_straight_flush(possible_hands):
+    for possible_hand in reversed(possible_hands):
+        suit_dict = count_suits(possible_hand)
+        suit = get_suit(suit_dict)
+        if suit:
+            return (possible_hand, get_straight_flush())
+    return None
+
+
+def cal_straight(possible_hands):
+    return (possible_hands[-1], get_straight())
+
+
+def get_straight(my_hand, face_values, suits):
+    possible_hands = possible_straights(my_hand, face_values, suits)
+    if possible_hands:
+        result = cal_royal_flush(possible_hands)
+        if result == None:
+            result = cal_straight_flush(possible_hands)
+            if result == None:
+                result = cal_straight(possible_hands)
+        return result
     else:
-        if flush_seq[0][0] == 10 and flush_seq[0][1] == "H":
-            return (flush_seq, "Royal_Flush")
-        else:
-            return (flush_seq, "Straight_Flush")
+        return None
